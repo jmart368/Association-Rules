@@ -1,0 +1,98 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Association Rules
+
+For this portion of the assignment, we will be using data from Groceries, a dataset that can be
+found with the arules package. Each row in the file represents one buyer’s purchases. This
+link provides some helpful templated examples for generating association rules:
+http://r-statistics.co/Association-Mining-With-R.html
+
+
+1. Describe “Groceries” by answering following questions:
+What is the class of “Groceries”?
+How many rows and columns does Groceries contain?
+```{r}
+install.packages("arules")
+install.packages("arulesViz")
+library(arules)
+library(arulesViz)
+data(Groceries) # read the Groceries data
+class(Groceries) # determine the class type
+summary(Groceries) # inspect the rows and columns
+
+# The class of 'Groceries' is transactions and there are 9835 rows and 169 columns.
+```
+
+
+2. Generate an item frequency barplot for the grocery items with support rate greater
+than 0.05. Include a screenshot of your results, along with the code you used to do this.
+```{r}
+itemFrequencyPlot(Groceries,
+                  type="relative",
+                  topN=20,
+                  support=0.05,
+                  horiz=F,
+                  col='steelblue3',
+                  xlab='',
+                  main='Item frequency')
+```
+
+
+3. Now, create a subset of rules that contain your grocery item (you can find your item
+in the spreadsheet in Blackboard, in Class Discussions From Your Instructor). Select
+4 different rules, (2 lhs and 2 rhs), and explain them in the way you would explain them
+to your roommate (I’m assuming your roommate is a smart person who is unfamiliar
+with data mining). Remember, every rule has three components: support, confidence, and
+lift.
+For each group of rules (grocery item on left-hand side, and grocery item on
+right-hand side), include a screenshot of your rules, along with the code you used to
+generate the rules.
+In a sentence or two, explain what meaning these rules might have for a supermarket
+retailer, such as Star Market. What could it do with this information?
+```{r}
+# determine items for lhs
+rules <- apriori (data=Groceries, parameter=list (supp=0.001,conf = 0.08), 
+                  appearance = list (default="lhs",rhs="whipped/sour cream"), 
+                  control = list (verbose=F)) # get rules that lead to buying 'whipped/sour cream'
+rules_conf_lhs <- sort (rules, by="confidence", decreasing=TRUE) # 'high-confidence' rules.
+inspect(head(rules_conf_lhs))
+# determine items for rhs
+rules <- apriori (data=Groceries, parameter=list (supp=0.001,conf = 0.08, minlen=2), 
+                  appearance = list(default="rhs",lhs="whipped/sour cream"), 
+                  control = list (verbose=F)) # those who bought 'whipped/sour cream' also bought..
+rules_conf_rhs <- sort (rules, by="confidence", decreasing=TRUE) 
+inspect(head(rules_conf_rhs))
+# create rules
+rules.sub1 <- subset(rules_conf_lhs, subset = lhs %in% c("whole milk", "whipped/sour cream"))
+inspect(head(rules.sub1))
+rules.sub2 <- subset(rules_conf_lhs, subset = lhs %in% c("yogurt", "whipped/sour cream"))
+inspect(head(rules.sub2))
+rules.sub3 <- subset(rules_conf_rhs, subset = rhs %in% c("other vegetables", "whipped/sour cream"))
+inspect(head(rules.sub3))
+rules.sub4 <- subset(rules_conf_rhs, subset = rhs %in% c("tropical fruit", "whipped/sour cream"))
+inspect(head(rules.sub4))
+# When examining the LHS and RHS you are given an indication on what items are associated with the before and after purchase of whipped/sour cream. When we observe rules.sub1 for the left hand side or LHS, the buyer purchased milk will purchase whipped/sour cream 9.3 times when observing the lift. In rules.sub4 observing the right hand side or RHS, purchasing whipped/sour cream will lead to 1.838 times purchasing tropical fruit. The significance behind these rules are numerous for supermarkets as it will allow them to organize their food stock per store layout and manage their inventory more effectively. It also allows buyers to shop faster. 
+```
+
+
+4. Using the plot() function in the arulesViz package, generate a scatter plot of any three
+rules involving your grocery item. Include a screenshot of your plot, along with the
+code you used to generate the plot. Describe your results in a sentence or two.
+```{r}
+plot(rules.sub2, interactive = F)
+# When we examine rules.sub2 for for yogurt and whipped/sour cream, both ietms have a very low support but a high confidence. However the lift is high for both itmes meaning that the association of whipped/sour cream along with yogurt is highly likely.
+```
+
+
+5. Again using the plot() function in the arulesViz package, generate a plot for any three of
+your rules. This time, add two more arguments to the function: method="graph",
+engine="htmlwidget". What do you see now? Include a screenshot of your plot, along
+with the code you used to generate the plot. Describe your results in a sentence or two.
+```{r}
+plot(rules.sub2, method="graph", engine="htmlwidget")
+# When you filter the following graph by whipped/cream, you will find the closses asociated items and rules associated with the item. We can see that yogurt and whipped/sour cream are highly associated in rules.sub2.
+```
+
